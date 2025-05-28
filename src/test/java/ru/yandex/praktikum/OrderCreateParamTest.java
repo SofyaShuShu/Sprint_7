@@ -9,8 +9,6 @@ import org.junit.runners.Parameterized;
 
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
-
 @RunWith(Parameterized.class)
 public class OrderCreateParamTest {
     private Order order;
@@ -40,15 +38,9 @@ public class OrderCreateParamTest {
     @Step("Parameterized order create test with different scooter color")
     public void orderCreateTestWithDifferentColor() throws Exception {
         order = OrderUtils.getNewOrder(color);
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(order)
-                        .when()
-                        .post("/api/v1/orders");
-        response.then().statusCode(201);
-
+        Response response = OrderUtils.createOrder(order);
         int orderTrack = response.jsonPath().getInt("track");
+
         //Удаляем созданный заказ
         OrderUtils.orderCancel(orderTrack);
     }

@@ -1,13 +1,12 @@
 package ru.yandex.praktikum;
 import io.qameta.allure.Description;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 public class CourierCreateTest {
@@ -23,26 +22,10 @@ public class CourierCreateTest {
     @Step("Create new courier with valid date")
         public void createNewCourierWithValidDate() throws Exception {
         courier = new Courier("Frodo", "1234", "Frodo");
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(courier)
-                        .when()
-                        .post("/api/v1/courier");
-                response.then().statusCode(201);
-    }
-
-    @Test
-    @Step("Test correct message, when create new courier")
-    public void createNewCourierWithValidDateMessage() throws Exception {
-        courier = new Courier("Frodo", "1234", "Frodo");
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(courier)
-                        .when()
-                        .post("/api/v1/courier");
-        response.then().statusCode(201);
+        Response response = CourierUtils.courierCreate(courier);
+        //Проверка кода ответа
+        response.then().statusCode(SC_CREATED);
+        //Проверка тела ответа
         response.then().body("ok", equalTo(true));
     }
 
@@ -50,20 +33,13 @@ public class CourierCreateTest {
     @Step("It is impossible to create two identical couriers")
     public void createDuplicateCourier() throws Exception{
      courier = new Courier("Frodo", "1234", "Frodo");
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(courier)
-                        .when()
-                        .post("/api/v1/courier");
-        response.then().statusCode(201);
-        Response response2 =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(courier)
-                        .when()
-                        .post("/api/v1/courier");
-        response2.then().statusCode(409);
+     //Создание первого курьера
+        Response response = CourierUtils.courierCreate(courier);
+        response.then().statusCode(SC_CREATED);
+
+     //Повторное создание курьера с такими же данными
+        Response responseDuplicate = CourierUtils.courierCreate(courier);
+        responseDuplicate.then().statusCode(SC_CONFLICT);
 
     }
 
@@ -73,32 +49,23 @@ public class CourierCreateTest {
     public void createCouriersWithDuplicateLogins() throws Exception{
         courier = new Courier("Frodo", "1234", "Frodo");
         Courier courierWithIdenticalLogin = new Courier("Frodo", "5555", "Frodo Beggins");
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(courier)
-                        .when()
-                        .post("/api/v1/courier");
-        response.then().statusCode(201);
-        Response response2 =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(courierWithIdenticalLogin)
-                        .when()
-                        .post("/api/v1/courier");
-        response2.then().statusCode(409);
-
+        //Создание первого курьера
+        Response response = CourierUtils.courierCreate(courier);
+        response.then().statusCode(SC_CREATED);
+        //Повторное создание курьера с таким же логином
+        Response responseDuplicateLogin = CourierUtils.courierCreate(courierWithIdenticalLogin);
+        //Проверка кода ответа
+        responseDuplicateLogin.then().statusCode(SC_CONFLICT);
+        //Проверка сообщения об ошибке
         String expectedMessage = "Этот логин уже используется";
-        response2.then().body("message", equalTo(expectedMessage));
+        responseDuplicateLogin.then().body("message", equalTo(expectedMessage));
     }
 
 
     @After
     @Step("Deleting the created courier from the database")
     public void tearDown() {
-        int courierId = CourierUtils.CourierLogin(courier);
-        CourierUtils.CourierDelete(courierId);
+        int courierId = CourierUtils.getCourierLogin(courier);
+        CourierUtils.courierDelete(courierId);
     }
-
-
 }

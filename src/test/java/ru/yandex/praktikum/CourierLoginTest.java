@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,202 +25,89 @@ public class CourierLoginTest {
     @Test
     @Step("Login with courier with valid date")
     public void courierLoginWithValidDate() throws Exception{
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(courier)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(200);
+        Response response = CourierUtils.courierLogin(courier);
+        //Проверка кода ответа
+        response.then().statusCode(SC_OK);
     }
 
     @Test
     @Step("Login impossible without login")
     public void courierLoginWithoutLogin() throws Exception{
-        String requestBody = "{ \"login\": \"\", \"password\": \"" + courier.getPassword() + "\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(400);
+        Courier courierWithoutLogin = new Courier("", courier.getPassword(), null);
+        Response response = CourierUtils.courierLogin(courierWithoutLogin);
+        //Проверка кода ответа
+        response.then().statusCode(SC_BAD_REQUEST);
+        //Проверка тела ответа
+        String expectedMessage = "Недостаточно данных для входа";
+        response.then().body("message", equalTo(expectedMessage));
+
     }
 
     @Test
     @Step("Login impossible without password")
     public void courierLoginWithoutPassword() throws Exception{
-        String requestBody = "{ \"login\": \"" + courier.getLogin() + "\", \"password\": \"\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(400);
+        Courier courierWithoutPassword = new Courier(courier.getLogin(), "", null);
+        Response response = CourierUtils.courierLogin(courierWithoutPassword);
+        //Проверка кода ответа
+        response.then().statusCode(SC_BAD_REQUEST);
+        //Проверка тела ответа
+        String expectedMessage = "Недостаточно данных для входа";
+        response.then().body("message", equalTo(expectedMessage));
     }
 
     @Test
     @Step("Login impossible without login and password")
     public void courierLoginWithoutLoginAndPassword() throws Exception{
-        String requestBody = "{ \"login\": \"\", \"password\": \"\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(400);
-    }
-
-    @Test
-    @Step("Checking message, when login without login")
-    public void checkingMessageCourierLoginWithoutLogin() throws Exception{
-        String requestBody = "{ \"login\": \"\", \"password\": \"" + courier.getPassword() + "\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(400);
-
-        String expectedMessage = "Недостаточно данных для входа";
-        response.then().body("message", equalTo(expectedMessage));
-
-    }
-
-    @Test
-    @Step("Checking message, when login without password")
-    public void checkingMessageCourierWithoutPassword() throws Exception{
-        String requestBody = "{ \"login\": \"" + courier.getLogin() + "\", \"password\": \"\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(400);
-
-        String expectedMessage = "Недостаточно данных для входа";
-        response.then().body("message", equalTo(expectedMessage));
-    }
-
-    @Test
-    @Step("Checking message, when login without login and password")
-    public void checkingMessageCourierWithoutLoginAndPassword() throws Exception {
-        String requestBody = "{ \"login\": \"\", \"password\": \"\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(400);
-
+        Courier courierWithoutLoginAndPassword = new Courier("", "", null);
+        Response response = CourierUtils.courierLogin(courierWithoutLoginAndPassword);
+        //Проверка кода ответа
+        response.then().statusCode(SC_BAD_REQUEST);
+        //Проверка тела ответа
         String expectedMessage = "Недостаточно данных для входа";
         response.then().body("message", equalTo(expectedMessage));
     }
 
     @Test
     @Step("Login impossible with incorrect login")
-    public void courierLoginWithIncorrectLogin() throws Exception{
-        String requestBody = "{ \"login\": \"Ivan\", \"password\": \"" + courier.getPassword() + "\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(404);
+    public void courierLoginWithIncorrectLogin() throws Exception {
+        Courier courierLoginWithIncorrectLogin = new Courier("Ivan", courier.getPassword(), null);
+        Response response = CourierUtils.courierLogin(courierLoginWithIncorrectLogin);
+        //Проверка кода ответа
+        response.then().statusCode(SC_NOT_FOUND);
+        //Проверка тела ответа
+        String expectedMessage = "Учетная запись не найдена";
+        response.then().body("message", equalTo(expectedMessage));
     }
 
     @Test
     @Step("Login impossible with incorrect password")
     public void courierLoginWithIncorrectPassword() throws Exception {
-        String requestBody = "{ \"login\": \"" + courier.getLogin() + "\", \"password\": \"0000\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(404);
+        Courier courierLoginWithIncorrectLogin = new Courier(courier.getLogin(), "0000", null);
+        Response response = CourierUtils.courierLogin(courierLoginWithIncorrectLogin);
+        //Проверка кода ответа
+        response.then().statusCode(SC_NOT_FOUND);
+        //Проверка тела ответа
+        String expectedMessage = "Учетная запись не найдена";
+        response.then().body("message", equalTo(expectedMessage));
     }
 
         @Test
         @Step("Login impossible with incorrect login and password")
         public void courierLoginWithIncorrectLoginAndPassword() throws Exception{
-            String requestBody = "{ \"login\": \"Ivan\", \"password\": \"0000\" }";
-            Response response =
-                    given()
-                            .header("Content-type", "application/json")
-                            .body(requestBody)
-                            .when()
-                            .post("/api/v1/courier/login");
-            response.then().statusCode(404);
+            Courier courierLoginWithIncorrectLogin = new Courier("Ivan", "0000", null);
+            Response response = CourierUtils.courierLogin(courierLoginWithIncorrectLogin);
+            //Проверка кода ответа
+            response.then().statusCode(SC_NOT_FOUND);
+            //Проверка тела ответа
+            String expectedMessage = "Учетная запись не найдена";
+            response.then().body("message", equalTo(expectedMessage));
     }
 
-    @Test
-    @Step("Checking message, when login  with incorrect login")
-    public void checkingMessageCourierLoginWithIncorrectLogin() throws Exception{
-        String requestBody = "{ \"login\": \"Ivan\", \"password\": \"" + courier.getPassword() + "\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(404);
-
-        String expectedMessage = "Учетная запись не найдена";
-        response.then().body("message", equalTo(expectedMessage));
-    }
-
-    @Test
-    @Step("Checking message, when login  with incorrect password")
-    public void checkingMessageCourierWithIncorrectPassword() throws Exception {
-        String requestBody = "{ \"login\": \"" + courier.getLogin() + "\", \"password\": \"0000\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(404);
-
-        String expectedMessage = "Учетная запись не найдена";
-        response.then().body("message", equalTo(expectedMessage));
-    }
-
-    @Test
-    @Step("Checking message, when login  with incorrect login and password")
-    public void checkingMessageCourierWithIncorrectLoginAndPassword() throws Exception{
-        String requestBody = "{ \"login\": \"Ivan\", \"password\": \"0000\" }";
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(requestBody)
-                        .when()
-                        .post("/api/v1/courier/login");
-        response.then().statusCode(404);
-
-        String expectedMessage = "Учетная запись не найдена";
-        response.then().body("message", equalTo(expectedMessage));
-    }
 
     @Test
     @Step("Checking that the response contains the id")
     public void authorizationReturnedIdInResponse() throws Exception{
-        Response response =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(courier)
-                        .when()
-                        .post("/api/v1/courier/login")
-                        .then()
-                        .statusCode(200)
-                        .extract().response();
+        Response response = CourierUtils.courierLogin(courier);
 
         int id = response.jsonPath().getInt("id");
         assertThat(id, notNullValue());
@@ -230,7 +117,8 @@ public class CourierLoginTest {
     @After
     @Step("Deleting the created courier from the database")
     public void tearDown() {
-        int courierId = CourierUtils.CourierLogin(courier);
-        CourierUtils.CourierDelete(courierId);
+        int courierId = CourierUtils.getCourierLogin(courier);
+        CourierUtils.courierDelete(courierId);
     }
     }
+

@@ -1,14 +1,13 @@
 package ru.yandex.praktikum;
 
+import io.qameta.allure.Step;
 import io.restassured.RestAssured;
-import io.restassured.response.Response;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
 
 public class Utils {
+    @Step("Method for setup base URL")
     public static void setUp(){
       RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru";
     }
 
 }
+

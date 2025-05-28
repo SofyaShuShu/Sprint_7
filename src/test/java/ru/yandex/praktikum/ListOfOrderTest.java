@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -25,26 +24,10 @@ public class ListOfOrderTest {
     @Test
     @Step("Сhecking that the list of orders is returned in the response body")
     public void listOfOrdersReturnedBodyInTheResponse(){
-        Response responseTrackNumber =
-                given()
-                        .header("Content-type", "application/json")
-                        .body(order)
-                        .when()
-                        .post("/api/v1/orders")
-                        .then()
-                        .statusCode(201)
-                        .extract().response();
-
-
+        Response responseTrackNumber = OrderUtils.createOrder(order);
         int track = responseTrackNumber.jsonPath().getInt("track");
 
-        Response responseOrderList =
-                given()
-                        .get("/api/v1/orders")
-                        .then()
-                        .statusCode(200)
-                        .extract().response();
-
+        Response responseOrderList = OrderUtils.getOrderList();
         List<?> orders = responseOrderList.jsonPath().getList("orders");
         assertThat("Тело ответа содержит orders", orders, notNullValue());
 
@@ -52,3 +35,4 @@ public class ListOfOrderTest {
         OrderUtils.orderCancel(track);
     }
 }
+

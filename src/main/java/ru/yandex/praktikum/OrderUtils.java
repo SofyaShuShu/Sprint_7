@@ -1,11 +1,16 @@
 package ru.yandex.praktikum;
 
+import io.qameta.allure.Step;
+import io.restassured.response.Response;
+import static org.apache.http.HttpStatus.*;
+
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
 
-public class OrderUtils {
 
+public class OrderUtils {
+    @Step("Method for cancel order")
     public static void orderCancel(int orderTrack){
         given()
                 .header("Content-type", "application/json")
@@ -14,6 +19,7 @@ public class OrderUtils {
                 .then();
     }
 
+    @Step("Method for filling in the order data")
     public static Order getNewOrder(List<String> color){
         return new Order(
                 "Sofya",
@@ -26,4 +32,30 @@ public class OrderUtils {
                 "Comment-comment-comment",
                 color);
     }
+
+    @Step("Method for sending an order creation request")
+    public static Response createOrder(Order order) {
+        return given()
+                .header("Content-type", "application/json")
+                .body(order)
+                .when()
+                .post("/api/v1/orders")
+                .then()
+                .statusCode(SC_CREATED)
+                .extract()
+                .response();
+    }
+
+    @Step("Method for getting a list of orders")
+    public static Response getOrderList(){
+        Response response =
+                given()
+                        .get("/api/v1/orders")
+                        .then()
+                        .statusCode(SC_OK)
+                        .extract().response();
+        return response;
+    }
+
 }
+
