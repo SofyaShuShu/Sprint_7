@@ -2,6 +2,7 @@ package ru.yandex.praktikum;
 
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,9 +10,14 @@ import org.junit.runners.Parameterized;
 
 import java.util.List;
 
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 @RunWith(Parameterized.class)
 public class OrderCreateParamTest {
     private Order order;
+    private int track;
     private List<String> color;
 
     public OrderCreateParamTest(List<String> color) {
@@ -39,9 +45,13 @@ public class OrderCreateParamTest {
     public void orderCreateTestWithDifferentColor() throws Exception {
         order = OrderUtils.getNewOrder(color);
         Response response = OrderUtils.createOrder(order);
-        int orderTrack = response.jsonPath().getInt("track");
+        assertThat("Статус кода ответа на создание заказа", response.statusCode(), equalTo(SC_CREATED));
+        track = response.jsonPath().getInt("track");
+    }
 
-        //Удаляем созданный заказ
-        OrderUtils.orderCancel(orderTrack);
+    @After
+    @Step("Deleting the created order from the database")
+    public void tearDown() {
+        OrderUtils.orderCancel(track);
     }
 }

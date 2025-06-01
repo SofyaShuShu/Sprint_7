@@ -2,6 +2,7 @@ package ru.yandex.praktikum;
 
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,6 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class OrderCreateTest {
     private Order order;
+    private int track;
 
 
     @Before
@@ -25,11 +27,13 @@ public class OrderCreateTest {
     public void checkingOrderHasTrack() throws Exception {
         Order newOrder = OrderUtils.getNewOrder(List.of("BLACK"));
         Response response = OrderUtils.createOrder(newOrder);
-
-
-        int track = response.jsonPath().getInt("track");
+        track = response.jsonPath().getInt("track");
         assertThat(track, notNullValue());
-//Удаляем созданный заказ
+    }
+
+    @After
+    @Step("Deleting the created order from the database")
+    public void tearDown() {
         OrderUtils.orderCancel(track);
     }
 }

@@ -2,7 +2,6 @@ package ru.yandex.praktikum;
 
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
-import static org.apache.http.HttpStatus.*;
 
 import java.util.List;
 
@@ -41,7 +40,6 @@ public class OrderUtils {
                 .when()
                 .post("/api/v1/orders")
                 .then()
-                .statusCode(SC_CREATED)
                 .extract()
                 .response();
     }
@@ -52,8 +50,8 @@ public class OrderUtils {
                 given()
                         .get("/api/v1/orders")
                         .then()
-                        .statusCode(SC_OK)
-                        .extract().response();
+                        .extract()
+                        .response();
         return response;
     }
 
